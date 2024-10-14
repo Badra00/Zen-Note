@@ -14,10 +14,14 @@ function saveEntries() {
   localStorage.setItem("entries", JSON.stringify(entries));
 }
 
+function replaceBreakLine(content) {
+  return content.replaceAll("\n", "<br>");
+}
+
 function addEntry(content) {
   const newEntry = {
     id: Date.now(),
-    content: content,
+    content: replaceBreakLine(content),
     date: new Date().toLocaleDateString(),
   };
   entries.unshift(newEntry);
@@ -28,6 +32,7 @@ function addEntry(content) {
 function editEntry(id) {
   console.log("Id to be edited", id);
   const entryDiv = document.querySelector(`.entry-content[data-id='${id}']`);
+  const entryActions= document.querySelector(`.entry-actions[data-id='${id}']`);
   console.log(entryDiv.innerText);
 
   const textarea = document.createElement('textarea');
@@ -36,6 +41,7 @@ function editEntry(id) {
   textarea.value = entryDiv.innerText;
 
   entryDiv.style.display = 'none'; // Hide the original content
+  entryActions.style.display = 'none'; // Hide the actions
   entryDiv.parentNode.insertBefore(textarea, entryDiv.nextSibling); // Insert textarea after entryDiv
 
   textarea.addEventListener('blur', () => {
@@ -45,7 +51,7 @@ function editEntry(id) {
     // Update the content in the entries array
     const index = entries.findIndex(entry => entry.id === id);
     if (index !== -1) {
-      entries[index].content = newContent; // Update the content
+      entries[index].content = replaceBreakLine(newContent); // Update the content
       saveEntries(entries); // Save the updated entries
 
       // Re-render entries after saving
@@ -53,7 +59,6 @@ function editEntry(id) {
     }
   });
 }
-
 
 
 function deleteEntry(id) {
@@ -66,48 +71,19 @@ function deleteEntry(id) {
     cancelButtonColor: '#d33',
     confirmButtonText: 'Yes, delete it!',
     cancelButtonText: 'No, cancel',
-}).then((result) => {
+  }).then((result) => {
     if (result.isConfirmed) {
-        entries = entries.filter(entry => entry.id !== id);
-        saveEntries();
-        renderEntries();
+      entries = entries.filter(entry => entry.id !== id);
+      saveEntries();
+      renderEntries();
 
-        Swal.fire(
-            'Deleted!',
-            'Your entry has been deleted.',
-            'success'
-        );
+      Swal.fire(
+        'Deleted!',
+        'Your entry has been deleted.',
+        'success'
+      );
     }
-});
-}
-
-function handleEditEntry(id) {
-const entry = entries.find(e => e.id === id);
-
-if (entry) {
-    const entryDiv = document.querySelector(`.entry-content[data-id='${id}']`);
-    const actionsDiv = document.querySelector(`.entry-actions[data-id='${id}']`);
-    entryDiv.innerHTML = `<textarea class="edit-input">${entry.content}</textarea>`;
-   
-    actionsDiv.innerHTML = `
-        <span class="save-btn" data-id="${entry.id}" title="Save Changes">Save 💾</span>
-        <span class="cancel-btn" data-id="${entry.id}" title="Cancel">Delete ❌</span>
-    `;
-    document.querySelector(`.save-btn[data-id='${id}']`).addEventListener('click', () => handleSaveEntry(id));
-    document.querySelector(`.cancel-btn[data-id='${id}']`).addEventListener('click', renderEntries);
-}
-}
-
-function handleSaveEntry(id) {
-const entry = entries.find(e => e.id === id);
-
-
-
-if (entry && newContent) {
-   
-    saveEntries();
-    renderEntries();
-}
+  });
 }
 
 function renderEntries() {
@@ -138,8 +114,8 @@ function renderEntries() {
 
 function toggleDarkMode() {
   document.body.classList.toggle('dark-mode');
-    document.body.classList.toggle('light-mode');
-    darkModeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+  document.body.classList.toggle('light-mode');
+  darkModeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
 }
 
 function createSnapshot(entry) {
@@ -250,18 +226,17 @@ entryForm.addEventListener("submit", (e) => {
 });
 
 entriesList.addEventListener("click", (e) => {
-  if (e.target.classList.contains("delete-btn")  ) {
+  if (e.target.classList.contains("delete-btn")) {
     const id = parseInt(e.target.getAttribute("data-id"));
-    
+
     deleteEntry(id);
-  
+
   } else if (e.target.classList.contains("snapshot-btn")) {
     const id = parseInt(e.target.getAttribute("data-id"));
     const entry = entries.find((entry) => entry.id === id);
     createSnapshot(entry);
   }
-  if( e.target.classList.contains("edit-btn"))
-  {
+  if (e.target.classList.contains("edit-btn")) {
     const id = parseInt(e.target.getAttribute("data-id"));
     editEntry(id);
   }
@@ -279,7 +254,7 @@ downloadSnapshotBtn.addEventListener("click", () => {
 
 copySnapshotBtn.addEventListener("click", () => {
   snapshotCanvas.toBlob((blob) => {
-    const item = new ClipboardItem({ "image/png": blob });
+    const item = new ClipboardItem({"image/png": blob});
     navigator.clipboard
       .write([item])
       .then(() => {
